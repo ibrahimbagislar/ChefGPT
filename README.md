@@ -1,6 +1,6 @@
 # ChefGPT
 
-ChefGPT, Türk mutfağı tarifleri üzerinde çalışan lokal bir yapay zeka yemek asistanı projesidir. Proje; web scraping ile tarif verisi toplama, tariflerden soru-cevap verisi üretme, FAISS tabanlı semantic search ve Ollama ile çalışan RAG akışını bir araya getirir.
+ChefGPT, Türk mutfağı tarifleri üzerinde çalışan lokal bir yapay zeka yemek asistanı projesidir. Proje; web scraping ile tarif verisi toplama, tariflerden soru-cevap verisi üretme, Qwen2.5-14B modelini ChefGPT verisiyle fine-tune etme, FAISS tabanlı semantic search ve Ollama ile çalışan RAG akışını bir araya getirir.
 
 Bu repository'de veri dosyaları paylaşılmadı. Büyük CSV, JSONL, FAISS index ve model dosyaları lokal olarak üretilir veya kullanıcı tarafından sağlanır.
 
@@ -8,6 +8,8 @@ Bu repository'de veri dosyaları paylaşılmadı. Büyük CSV, JSONL, FAISS inde
 
 - Nefis Yemek Tarifleri üzerinden tarif scraping kodu
 - Tarif verisinden ChefGPT için Q&A dataset üretimi
+- Unsloth ile Qwen2.5-14B-Instruct fine-tune notebook'u
+- GGUF export ile Ollama üzerinde lokal model çalıştırma
 - FAISS ile hızlı tarif arama
 - Sentence Transformers ile Türkçe destekli embedding
 - Ollama üzerinde çalışan lokal LLM bağlantısı
@@ -22,6 +24,9 @@ ChefGPT/
 │   ├── Program.cs
 │   ├── QAGenerator.cs
 │   └── ChefGPTScraper.csproj
+├── training/
+│   ├── ChefGPTModelEgitim.ipynb
+│   └── README.md
 ├── local/
 │   ├── build_faiss.py
 │   ├── chefgpt_server_faiss.py
@@ -40,6 +45,7 @@ Aşağıdaki dosyalar özellikle eklenmedi:
 
 - Scraping sonucu oluşan CSV dosyaları
 - Q&A dataset dosyaları
+- Fine-tune checkpoint dosyaları
 - FAISS index ve metadata çıktıları
 - ChromaDB çıktıları
 - GGUF/model dosyaları
@@ -82,9 +88,38 @@ Genel çalışma akışı şu şekilde:
 
 1. `scraper/Program.cs` tarifleri toplar ve CSV üretir.
 2. `scraper/QAGenerator.cs` tariflerden soru-cevap formatında veri üretir.
-3. `local/build_faiss.py` CSV tarif verisini okuyup FAISS index oluşturur.
-4. `local/chefgpt_server_faiss.py` FAISS index + Ollama ile lokal ChefGPT RAG akışını çalıştırır.
-5. `website/` klasöründeki arayüz kullanıcıdan soru alır ve backend'e gönderir.
+3. `training/ChefGPTModelEgitim.ipynb` Qwen2.5-14B-Instruct modelini ChefGPT verisiyle fine-tune eder.
+4. Fine-tune edilen model GGUF olarak export edilir ve Ollama üzerinde çalıştırılır.
+5. `local/build_faiss.py` CSV tarif verisini okuyup FAISS index oluşturur.
+6. `local/chefgpt_server_faiss.py` FAISS index + Ollama ile lokal ChefGPT RAG akışını çalıştırır.
+7. `website/` klasöründeki arayüz kullanıcıdan soru alır ve backend'e gönderir.
+
+## Model Eğitimi
+
+Model eğitimi için kullanılan notebook:
+
+```text
+training/ChefGPTModelEgitim.ipynb
+```
+
+Bu notebook Colab üzerinde çalışacak şekilde hazırlanmıştır. Eğitimde kullanılan ana model:
+
+```text
+unsloth/Qwen2.5-14B-Instruct-bnb-4bit
+```
+
+Notebook'taki ana adımlar:
+
+- Unsloth, TRL, PEFT, bitsandbytes ve datasets kurulumları yapılır.
+- Google Drive bağlanır.
+- `chefgpt_qa_clean-50k.jsonl` eğitim verisi okunur.
+- Qwen2.5-14B-Instruct 4-bit olarak yüklenir.
+- LoRA ayarlarıyla fine-tune yapılır.
+- Checkpoint'ler Drive'a kaydedilir.
+- Eğitim bitince model `q4_k_m` quantization ile GGUF formatına export edilir.
+- GGUF model Drive'daki `ChefGPT/chefgpt-14b-gguf` klasörüne kopyalanır.
+
+Eğitim çıktıları ve GGUF dosyası büyük olduğu için repository'ye eklenmedi.
 
 ## FAISS Index Oluşturma
 
