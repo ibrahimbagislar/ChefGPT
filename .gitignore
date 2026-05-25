@@ -1,0 +1,40 @@
+bin/
+obj/
+.vs/
+.idea/
+.vscode/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Data / generated artifacts
+data/
+datasets/
+faiss_data/
+chromadb_data/
+*.csv
+*.jsonl
+*.index
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# Local state
+son_sayfa.txt
+*.log
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
